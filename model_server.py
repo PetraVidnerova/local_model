@@ -1,8 +1,9 @@
 import json 
 from flask import Flask, request, jsonify
-from model import MixtralModel
+from model import MixtralModel, Embedding 
 
 model = MixtralModel()
+embed = Embedding()
 
 app = Flask(__name__)
 
@@ -14,8 +15,11 @@ def hello_world():
 def query_model():
  data = json.loads(request.data)
  print(data)
- response = model.answer(data["prompt"])
-
+ try: 
+     response = model.answer(data["prompt"])
+ except Exception as e:
+     print(e)
+     return jsonify({}), 404
  # response = """
  # Hello, Mixtral is down.
  # So sadly down.
@@ -23,6 +27,12 @@ def query_model():
  # """
 
  return jsonify({ 'response': response }), 200
+
+@app.route('/embed', methods=['POST'])
+def embedding():
+    data = json.loads(request.data)
+    response = embed.encode(data["sentences"])
+    return jsonify({'embeddings': response}), 200
 
 
 
