@@ -1,4 +1,3 @@
-
 import logging
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -17,6 +16,24 @@ class MixtralModel():
                                                           device_map="auto")
         logging.warning("Model ready.")
 
+    def clean_response(self, text):
+        if text.startswith("<s>"):
+            text = text[3:]
+        if text.endswith("</s>"):
+            text = text[:-4]
+
+        print(text)
+        
+        start = text.find("[INST]")
+        end = text.find("[/INST]") + 7
+            
+        if (start == -1) or (end == -1):
+            print(text)
+            raise ValueError("Missing [INST] [\INST]")
+        return text[:start] + text[end:]
+
+
+        
     def answer(self, prompt):
 
         messages = [{"role": "user", "content": prompt}]
@@ -24,12 +41,14 @@ class MixtralModel():
         generated_ids = self.model.generate(
             chat_in,
             pad_token_id=self.tokenizer.eos_token_id,
-            max_new_tokens=100,
+            max_new_tokens=1000,
             do_sample=True
         )
         out = self.tokenizer.batch_decode(generated_ids)[0]
-                                                                                  
-        return out 
+
+        print(out)
+        
+        return self.clean_response(out) 
 
 
 class Embedding():
